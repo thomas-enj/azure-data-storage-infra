@@ -28,7 +28,7 @@ module "storage" {
   corporate_ip        = var.corporate_ip
   aks_subnet_id       = module.aks.node_subnet_id
   key_vault_id        = module.keyvault.key_vault_id
-  key_vault_key_name  = module.keyvault.key_name
+  key_vault_key_id    = module.keyvault.key_vault_key_id
 }
 
 module "identity" {
