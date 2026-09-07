@@ -56,13 +56,40 @@ az role assignment create \
   --assignee-principal-type ServicePrincipal \
   --scope "$TARGET_RG_ID"
 
-echo "Création de la fédération OIDC avec le dépôt GitHub..."
+echo "Création de la fédération OIDC pour la branche $BRANCH..."
 az identity federated-credential create \
-  --name "github-actions-federation" \
+  --name "github-actions-federation-branch" \
   --identity-name "$IDENTITY_NAME" \
   --resource-group "$TARGET_RG" \
   --issuer "https://token.actions.githubusercontent.com" \
   --subject "repo:$GITHUB_ORG/$GITHUB_REPO:ref:refs/heads/$BRANCH" \
+  --audience "api://AzureADTokenExchange"
+
+echo "Création de la fédération OIDC pour les Pull Requests..."
+az identity federated-credential create \
+  --name "github-actions-federation-pr" \
+  --identity-name "$IDENTITY_NAME" \
+  --resource-group "$TARGET_RG" \
+  --issuer "https://token.actions.githubusercontent.com" \
+  --subject "repo:$GITHUB_ORG/$GITHUB_REPO:pull_request" \
+  --audience "api://AzureADTokenExchange"
+
+echo "Création de la fédération OIDC pour l'environnement tf-apply..."
+az identity federated-credential create \
+  --name "github-actions-federation-env-apply" \
+  --identity-name "$IDENTITY_NAME" \
+  --resource-group "$TARGET_RG" \
+  --issuer "https://token.actions.githubusercontent.com" \
+  --subject "repo:$GITHUB_ORG/$GITHUB_REPO:environment:tf-apply" \
+  --audience "api://AzureADTokenExchange"
+
+echo "Création de la fédération OIDC pour l'environnement tf-destroy..."
+az identity federated-credential create \
+  --name "github-actions-federation-env-destroy" \
+  --identity-name "$IDENTITY_NAME" \
+  --resource-group "$TARGET_RG" \
+  --issuer "https://token.actions.githubusercontent.com" \
+  --subject "repo:$GITHUB_ORG/$GITHUB_REPO:environment:tf-destroy" \
   --audience "api://AzureADTokenExchange"
 
 echo ""
