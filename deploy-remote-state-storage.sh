@@ -1,26 +1,32 @@
-export OWNER="thomas-enjalbert"
-export RESOURCE_GROUP="tenjalbertRG"
-export STORAGE_ACCOUNT="rmstate$(IFS=' -' read -r p n <<< "$OWNER"; echo "${p:0:2}${n:0:2}")tf"
-export LOCATION="francecentral"
-export CONTAINER="tfstate-ads"
+#!/bin/bash
+set -e
 
-az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+# Chargement des variables depuis le fichier ignoré par Git
+if [ -f "vars.env" ]; then
+  source vars.env
+  echo "✅ Variables chargées depuis vars.env"
+else
+  echo "❌ Erreur : Le fichier vars.env est introuvable."
+  exit 1
+fi
+
+az group create --name "$TARGET_RG" --location "$LOCATION"
 
 az storage account create \
-  --name           "$STORAGE_ACCOUNT" \
-  --resource-group "$RESOURCE_GROUP" \
+  --name           "$STATE_SA" \
+  --resource-group "$TARGET_RG" \
   --location       "$LOCATION" \
   --sku            Standard_LRS
 
 sleep 15
 
 az storage container create \
-  --name         "$CONTAINER" \
-  --account-name "$STORAGE_ACCOUNT"
+  --name         "$STATE_CONTAINER" \
+  --account-name "$STATE_SA"
 
 az storage blob list \
-  --container-name "$CONTAINER" \
-  --account-name   "$STORAGE_ACCOUNT" \
+  --container-name "$STATE_CONTAINER" \
+  --account-name   "$STATE_SA" \
   --output         table
 
 sleep 15
@@ -28,8 +34,8 @@ sleep 15
 cd terraform
 
 terraform init \
-  -backend-config="resource_group_name=${RESOURCE_GROUP}" \
-  -backend-config="storage_account_name=${STORAGE_ACCOUNT}" \
-  -backend-config="container_name=$CONTAINER" \
+  -backend-config="resource_group_name=${TARGET_RG}" \
+  -backend-config="storage_account_name=${STATE_SA}" \
+  -backend-config="container_name=$STATE_CONTAINER" \
   -backend-config="key=${OWNER}.terraform.tfstate" \
   -migrate-state
