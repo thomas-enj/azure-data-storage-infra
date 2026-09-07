@@ -5,13 +5,13 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                      = "velero-kv-${var.environment}-${random_string.suffix.result}"
-  location                  = var.location
-  resource_group_name       = var.resource_group_name
-  tenant_id                 = var.tenant_id
-  sku_name                  = "standard"
-  purge_protection_enabled  = true
-  enable_rbac_authorization = true
+  name                       = "velero-kv-${var.environment}-${random_string.suffix.result}"
+  location                   = var.location
+  resource_group_name        = var.resource_group_name
+  tenant_id                  = var.tenant_id
+  sku_name                   = "standard"
+  purge_protection_enabled   = true
+  rbac_authorization_enabled = true
 }
 
 resource "azurerm_role_assignment" "current_user_crypto_officer" {
