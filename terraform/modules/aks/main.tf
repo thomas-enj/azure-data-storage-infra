@@ -36,4 +36,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
   node_provisioning_profile {
     mode = "Manual"
   }
+
+  # Distinct from the vnet range (10.0.0.0/16) to avoid CIDR overlap with the AKS subnet
+  network_profile {
+    network_plugin = "azure"
+    service_cidr   = "10.2.0.0/16"
+    dns_service_ip = "10.2.0.10"
+  }
 }

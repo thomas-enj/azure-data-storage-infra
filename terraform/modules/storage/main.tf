@@ -5,7 +5,8 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_storage_account" "sa" {
-  name                     = "velerostg${replace(var.environment, "-", "")}${random_string.suffix.result}"
+  # Storage Account names are lowercase alphanumeric only and capped at 24 chars, so the environment is truncated
+  name                     = "velerostg${substr(lower(replace(var.environment, "-", "")), 0, 11)}${random_string.suffix.result}"
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
@@ -20,7 +21,7 @@ resource "azurerm_storage_account" "sa" {
   network_rules {
     default_action             = "Deny"
     bypass                     = ["AzureServices"]
-    ip_rules                   = [var.corporate_ip]
+    ip_rules                   = var.corporate_ip != "" ? [var.corporate_ip] : []
     virtual_network_subnet_ids = [var.aks_subnet_id]
   }
   

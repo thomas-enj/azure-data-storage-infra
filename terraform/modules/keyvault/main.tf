@@ -5,7 +5,8 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                       = "velero-kv-${var.environment}-${random_string.suffix.result}"
+  # Key Vault names are capped at 24 chars, so the environment is truncated
+  name                       = "velero-kv-${substr(replace(var.environment, "-", ""), 0, 6)}-${random_string.suffix.result}"
   location                   = var.location
   resource_group_name        = var.resource_group_name
   tenant_id                  = var.tenant_id
