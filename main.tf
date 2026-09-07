@@ -16,7 +16,7 @@ module "keyvault" {
 module "aks" {
   source              = "./modules/aks"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
 }
 
