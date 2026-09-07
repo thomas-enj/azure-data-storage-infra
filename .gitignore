@@ -1,3 +1,6 @@
+# Ignore the local environment variables file
+vars.env
+
 # Local .terraform directories
 .terraform/
 
