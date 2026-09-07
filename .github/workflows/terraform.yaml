@@ -31,7 +31,7 @@ env:
   # Variables pour le Backend (Terraform State)
   STATE_RG: ${{ vars.STATE_RG }}
   STATE_SA: ${{ vars.STATE_SA }}
-  STATE_CONTAINER: ${{ vars.STATE_CONTAINER || 'tfstate-ads' }}
+  STATE_CONTAINER: ${{ vars.STATE_CONTAINER }}
   OWNER: ${{ vars.OWNER }}
   
   # Variables injectées dans Terraform (variables.tf)
