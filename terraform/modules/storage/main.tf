@@ -35,14 +35,13 @@ resource "azurerm_role_assignment" "sa_kv_crypto" {
 
 resource "azurerm_storage_account_customer_managed_key" "cmk" {
   storage_account_id = azurerm_storage_account.sa.id
-  key_vault_id       = var.key_vault_id
-  key_name           = var.key_vault_key_name
+  key_vault_key_id   = var.key_vault_key_id
   depends_on         = [azurerm_role_assignment.sa_kv_crypto]
 }
 
 resource "azurerm_storage_container" "velero" {
   name                  = "velero"
-  storage_account_name  = azurerm_storage_account.sa.name
+  storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
   depends_on            = [azurerm_storage_account_customer_managed_key.cmk]
 }
