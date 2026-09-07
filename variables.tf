@@ -8,6 +8,12 @@ variable "location" {
   default     = "francecentral"
 }
 
+variable "aks_location" {
+  type        = string
+  default     = "westeurope"
+  description = "Région spécifique pour le cluster AKS"
+}
+
 variable "environment" {
   type        = string
   default     = "non-production"
