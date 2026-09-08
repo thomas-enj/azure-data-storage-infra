@@ -29,3 +29,8 @@ variable "employes_group_id" {
   type        = string
   description = "Object ID du groupe Entra ID 'employés'"
 }
+
+variable "gitops_repo_url" {
+  type        = string
+  description = "L'URL HTTPS du repository GitHub contenant les manifests pour ArgoCD"
+}
