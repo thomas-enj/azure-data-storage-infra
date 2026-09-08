@@ -7,7 +7,7 @@ data "azurerm_resource_group" "rg" {
 module "keyvault" {
   source              = "./modules/keyvault"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
   tenant_id           = data.azurerm_client_config.current.tenant_id
   current_object_id   = data.azurerm_client_config.current.object_id
@@ -16,19 +16,19 @@ module "keyvault" {
 module "aks" {
   source              = "./modules/aks"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
 }
 
 module "storage" {
   source              = "./modules/storage"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
   corporate_ip        = var.corporate_ip
   aks_subnet_id       = module.aks.node_subnet_id
   key_vault_id        = module.keyvault.key_vault_id
-  key_vault_key_name  = module.keyvault.key_name
+  key_vault_key_id    = module.keyvault.key_vault_key_id
 }
 
 module "identity" {
@@ -38,4 +38,11 @@ module "identity" {
   environment         = var.environment
   aks_oidc_issuer_url = module.aks.oidc_issuer_url
   storage_account_id  = module.storage.storage_account_id
+}
+
+module "fileshare" {
+  source              = "./modules/fileshare"
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = var.aks_location
+  employes_group_id   = var.employes_group_id
 }

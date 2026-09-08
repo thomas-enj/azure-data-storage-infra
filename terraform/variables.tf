@@ -8,6 +8,12 @@ variable "location" {
   default     = "francecentral"
 }
 
+variable "aks_location" {
+  type        = string
+  default     = "westeurope"
+  description = "Région spécifique pour le cluster AKS, le keyvault et le storage"
+}
+
 variable "environment" {
   type        = string
   default     = "non-production"
@@ -17,4 +23,9 @@ variable "environment" {
 variable "corporate_ip" {
   type        = string
   description = "IP publique de l'entreprise"
+}
+
+variable "employes_group_id" {
+  type        = string
+  description = "Object ID du groupe Entra ID 'employés'"
 }
