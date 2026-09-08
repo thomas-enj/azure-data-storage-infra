@@ -1,0 +1,265 @@
+name: Terraform - Lint, Scan, Plan, Apply & Destroy
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - apply
+          - destroy
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  TERRAFORM_VERSION: 1.9.0
+  # Authentification Azure via OIDC
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_OIDC: true
+  
+  # Variables pour le Backend (Terraform State)
+  STATE_RG: ${{ vars.STATE_RG }}
+  STATE_SA: ${{ vars.STATE_SA }}
+  STATE_CONTAINER: ${{ vars.STATE_CONTAINER }}
+  OWNER: ${{ vars.OWNER }}
+  
+  # Variables injectées dans Terraform (variables.tf)
+  TF_VAR_resource_group_name: ${{ vars.TARGET_RG }}
+  TF_VAR_corporate_ip: ${{ secrets.CORPORATE_IP }}
+
+jobs:
+  tflint:
+    name: Terraform Linting
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'workflow_dispatch' || inputs.action != 'destroy')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.52.0
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run TFLint
+        run: tflint -f compact
+
+  checkov:
+    name: Security Scan (Checkov)
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'workflow_dispatch' || inputs.action != 'destroy')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Run Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./terraform
+          framework: terraform
+          output_format: cli,sarif
+          output_file_path: console,checkov_report.sarif
+          soft_fail: true
+
+  gitleaks:
+    name: Secret Scan (Gitleaks)
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'workflow_dispatch' || inputs.action != 'destroy')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  plan:
+    name: Terraform Plan
+    needs: [tflint, checkov, gitleaks]
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'workflow_dispatch' || inputs.action != 'destroy')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Az CLI login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${STATE_RG}" \
+            -backend-config="storage_account_name=${STATE_SA}" \
+            -backend-config="container_name=${STATE_CONTAINER}" \
+            -backend-config="key=${OWNER}.terraform.tfstate"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          # The plan is launched with the colors (for CI logs) and saved
+          terraform plan -out=tfplan
+
+          # The result is displayed in black text for the comment
+          PLAN_TEXT=$(terraform show -no-color tfplan)
+
+          # Required syntax to safely pass a multi-line string to GITHUB_OUTPUT
+          delimiter="$(openssl rand -hex 8)"
+          echo "clean_plan<<${delimiter}" >> $GITHUB_OUTPUT
+          echo "$PLAN_TEXT" >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Comment PR with Terraform Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        env:
+          PLAN: ${{ steps.plan.outputs.clean_plan }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Structure of the body of the commentary
+            const output = `### Terraform result 🚀
+            #### Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            #### Initialization ⚙️ \`${{ steps.init.outcome }}\`
+            #### Validation 🤖 \`${{ steps.validate.outcome }}\`
+            #### Plan 📖 \`${{ steps.plan.outcome }}\`
+            
+            <details><summary>Display Plan Details</summary>
+            
+            \`\`\`hcl
+            ${process.env.PLAN}
+            \`\`\`
+            
+            </details>
+            
+            *Triggered by : @${{ github.actor }}, Event : \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  apply:
+    name: Terraform Apply
+    needs: [plan]
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
+    runs-on: ubuntu-latest
+    environment: tf-apply
+    defaults:
+        run:
+            working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Az CLI login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${STATE_RG}" \
+            -backend-config="storage_account_name=${STATE_SA}" \
+            -backend-config="container_name=${STATE_CONTAINER}" \
+            -backend-config="key=${OWNER}.terraform.tfstate"
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+  destroy:
+    if: inputs.action == 'destroy'
+    runs-on: ubuntu-latest
+    environment: tf-destroy
+    defaults:
+        run:
+            working-directory: ./terraform
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Az CLI login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${STATE_RG}" \
+            -backend-config="storage_account_name=${STATE_SA}" \
+            -backend-config="container_name=${STATE_CONTAINER}" \
+            -backend-config="key=${OWNER}.terraform.tfstate"
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
