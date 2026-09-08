@@ -48,7 +48,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 }
 
-#Création d'un node dédié pour la base de données MySQL
+# Création d'un node dédié pour la base de données MySQL
 resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
   name                  = "dbpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
