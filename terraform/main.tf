@@ -39,3 +39,10 @@ module "identity" {
   aks_oidc_issuer_url = module.aks.oidc_issuer_url
   storage_account_id  = module.storage.storage_account_id
 }
+
+module "fileshare" {
+  source              = "./modules/fileshare"
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = var.aks_location
+  employes_group_id   = var.employes_group_id
+}
