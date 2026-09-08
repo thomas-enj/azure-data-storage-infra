@@ -24,3 +24,8 @@ variable "corporate_ip" {
   type        = string
   description = "IP publique de l'entreprise"
 }
+
+variable "employes_group_id" {
+  type        = string
+  description = "Object ID du groupe Entra ID 'employés'"
+}
