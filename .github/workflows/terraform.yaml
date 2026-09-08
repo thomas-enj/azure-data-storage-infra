@@ -38,6 +38,7 @@ env:
   TF_VAR_resource_group_name: ${{ vars.TARGET_RG }}
   TF_VAR_corporate_ip: ${{ secrets.CORPORATE_IP }}
   TF_VAR_employes_group_id: ${{ vars.TF_VAR_EMPLOYES_GROUP_ID }}
+  TF_VAR_gitops_repo_url: ${{ vars.TF_VAR_GITOPS_REPO_URL }}
 
 jobs:
   tflint:
