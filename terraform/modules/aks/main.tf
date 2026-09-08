@@ -53,7 +53,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
   name                  = "dbpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   
-  vm_size               = "Standard_B2s" 
+  vm_size               = "Standard_B2s_v2"
   
   node_count            = 1                  
   mode                  = "User"
