@@ -11,7 +11,7 @@ variable "location" {
 variable "aks_location" {
   type        = string
   default     = "westeurope"
-  description = "Région spécifique pour le cluster AKS"
+  description = "Région spécifique pour le cluster AKS, le keyvault et le storage"
 }
 
 variable "environment" {

@@ -7,7 +7,7 @@ data "azurerm_resource_group" "rg" {
 module "keyvault" {
   source              = "./modules/keyvault"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
   tenant_id           = data.azurerm_client_config.current.tenant_id
   current_object_id   = data.azurerm_client_config.current.object_id
@@ -23,7 +23,7 @@ module "aks" {
 module "storage" {
   source              = "./modules/storage"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = var.location
+  location            = var.aks_location
   environment         = var.environment
   corporate_ip        = var.corporate_ip
   aks_subnet_id       = module.aks.node_subnet_id
