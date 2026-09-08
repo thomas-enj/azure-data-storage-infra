@@ -6,7 +6,7 @@ resource "random_string" "suffix" {
 
 resource "azurerm_storage_account" "sa" {
   # Storage Account names are lowercase alphanumeric only and capped at 24 chars, so the environment is truncated
-  name                     = "velerostg${substr(lower(replace(var.environment, "-", "")), 0, 11)}${random_string.suffix.result}"
+  name                     = "adsstg${substr(lower(replace(var.environment, "-", "")), 0, 11)}${random_string.suffix.result}"
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
