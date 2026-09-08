@@ -1,5 +1,5 @@
 resource "azurerm_user_assigned_identity" "velero" {
-  name                = "velero-workload-identity-${var.environment}"
+  name                = "ads-workload-identity-${var.environment}"
   resource_group_name = var.resource_group_name
   location            = var.location
 }
