@@ -46,3 +46,57 @@ module "fileshare" {
   location            = var.aks_location
   employes_group_id   = var.employes_group_id
 }
+
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "7.4.4"
+  namespace        = "argocd"
+  create_namespace = true
+
+  # Le cluster AKS doit être créé AVANT d'essayer d'y installer ArgoCD
+  depends_on = [module.aks]
+
+  set {
+    name  = "server.extraArgs"
+    value = "{--insecure}" # Désactive le TLS interne pour simplifier l'accès local
+  }
+}
+
+resource "helm_release" "argocd_apps" {
+  name       = "argocd-apps"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  version    = "2.0.1"
+  namespace  = "argocd"
+
+  # ArgoCD doit être installé avant de configurer l'application.
+  depends_on = [helm_release.argocd]
+
+  values = [
+    yamlencode({
+      applications = {
+        gitops-bootstrap = {
+          namespace = "argocd"
+          project   = "default"
+          source = {
+            repoURL        = var.gitops_repo_url
+            targetRevision = "main"
+            path           = "manifests"
+          }
+          destination = {
+            server    = "https://kubernetes.default.svc"
+            namespace = "default"
+          }
+          syncPolicy = {
+            automated = {
+              prune    = true
+              selfHeal = true
+            }
+          }
+        }
+      }
+    })
+  ]
+}
