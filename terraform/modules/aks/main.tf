@@ -47,3 +47,23 @@ resource "azurerm_kubernetes_cluster" "aks" {
     dns_service_ip = "10.2.0.10"
   }
 }
+
+#Création d'un node dédié pour la base de données MySQL
+resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
+  name                  = "dbpool"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+  
+  vm_size               = "Standard_B2s" 
+  
+  node_count            = 1                  
+  mode                  = "User"
+
+  node_labels = {
+    workload = "database"
+    db_type  = "mysql"
+  }
+
+  node_taints = [
+    "workload=database:NoSchedule"
+  ]
+}
