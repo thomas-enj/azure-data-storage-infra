@@ -3,7 +3,7 @@ output "workload_identity_client_id" {
   value       = module.identity.client_id
 }
 
-output "key_vault_name" {
-  description = "Le nom du Key Vault à copier dans les manifestes ArgoCD (SecretProviderClass)"
-  value       = module.keyvault.key_vault_name
+output "key_vault_id" {
+  description = "L'ID du Key Vault à copier dans les manifestes ArgoCD (SecretProviderClass)"
+  value       = module.keyvault.key_vault_id
 }
