@@ -30,3 +30,23 @@ resource "azurerm_key_vault_key" "cmk" {
 
   depends_on = [azurerm_role_assignment.current_user_crypto_officer]
 }
+
+resource "azurerm_role_assignment" "current_user_secrets_officer" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = var.current_object_id
+}
+
+resource "random_password" "mysql_root" {
+  length           = 32
+  special          = true
+  override_special = "!@#%*()-_=+"
+}
+
+resource "azurerm_key_vault_secret" "mysql_root_password" {
+  name         = "mysql-root-password"
+  value        = random_password.mysql_root.result
+  key_vault_id = azurerm_key_vault.kv.id
+
+  depends_on = [azurerm_role_assignment.current_user_secrets_officer]
+}

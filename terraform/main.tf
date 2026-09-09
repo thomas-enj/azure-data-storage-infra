@@ -100,3 +100,9 @@ resource "helm_release" "argocd_apps" {
     })
   ]
 }
+
+resource "azurerm_role_assignment" "mysql_keyvault_reader" {
+  scope                = module.keyvault.key_vault_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = module.identity.principal_id
+}
