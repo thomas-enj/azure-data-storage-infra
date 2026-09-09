@@ -23,3 +23,11 @@ resource "azurerm_federated_identity_credential" "velero" {
   user_assigned_identity_id = azurerm_user_assigned_identity.velero.id
   subject                   = "system:serviceaccount:velero:velero"
 }
+
+resource "azurerm_federated_identity_credential" "mysql" {
+  name                      = "mysql-federated-credential"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = var.aks_oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.velero.id
+  subject                   = "system:serviceaccount:database-ns:mysql-sa"
+}
