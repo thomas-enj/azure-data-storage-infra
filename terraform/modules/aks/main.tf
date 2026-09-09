@@ -43,6 +43,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
 
+  # Installe automatiquement le pilote CSI Key Vault et la CRD (Custom Resource Definition) SecretProviderClass sur le cluster AKS.
+  # Cela permet aux Pods (comme MySQL) d'aller lire les mots de passe directement dans Azure de manière sécurisée.
+  key_vault_secrets_provider {
+    secret_rotation_enabled = true
+  }
+
   node_provisioning_profile {
     mode = "Manual"
   }
