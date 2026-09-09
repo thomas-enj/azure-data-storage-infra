@@ -52,11 +52,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
 resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
   name                  = "dbpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
-  
-  vm_size               = "Standard_D2s_v3"
-  
-  node_count            = 1                  
-  mode                  = "User"
+
+  vm_size = "Standard_D2s_v3"
+
+  node_count = 1
+  mode       = "User"
 
   node_labels = {
     workload = "database"

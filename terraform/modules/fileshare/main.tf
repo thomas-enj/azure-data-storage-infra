@@ -17,9 +17,9 @@ resource "azurerm_storage_account" "fs_sa" {
 }
 
 resource "azurerm_storage_share" "fs" {
-  name                 = "employes-share"
+  name               = "employes-share"
   storage_account_id = azurerm_storage_account.fs_sa.id
-  quota                = 50
+  quota              = 50
 }
 
 resource "azurerm_role_assignment" "fs_contributor" {
