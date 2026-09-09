@@ -27,6 +27,13 @@ resource "azurerm_kubernetes_cluster" "aks" {
     node_count     = 1
     vm_size        = "Standard_D2_v3"
     vnet_subnet_id = azurerm_subnet.subnet.id
+
+    # Valeurs par défaut d'Azure, déclarées pour éviter un diff permanent
+    upgrade_settings {
+      max_surge                     = "10%"
+      drain_timeout_in_minutes      = 0
+      node_soak_duration_in_minutes = 0
+    }
   }
 
   identity {
@@ -52,6 +59,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
   name                  = "dbpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+  vnet_subnet_id        = azurerm_subnet.subnet.id
 
   vm_size = "Standard_D2s_v3"
 
@@ -66,4 +74,10 @@ resource "azurerm_kubernetes_cluster_node_pool" "db_pool" {
   node_taints = [
     "workload=database:NoSchedule"
   ]
+
+  upgrade_settings {
+    max_surge                     = "10%"
+    drain_timeout_in_minutes      = 0
+    node_soak_duration_in_minutes = 0
+  }
 }
