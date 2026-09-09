@@ -24,8 +24,10 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = true
+      # Garde de key vault en soft-delete sur le destroy et le réutilise lors du prochain apply.
+      purge_soft_delete_on_destroy    = false
       recover_soft_deleted_key_vaults = true
+      recover_soft_deleted_keys       = true
     }
   }
 }

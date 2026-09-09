@@ -6,13 +6,13 @@ resource "random_string" "suffix" {
 
 resource "azurerm_storage_account" "sa" {
   # Storage Account names are lowercase alphanumeric only and capped at 24 chars, so the environment is truncated
-  name                     = "adsstg${substr(lower(replace(var.environment, "-", "")), 0, 11)}${random_string.suffix.result}"
-  resource_group_name      = var.resource_group_name
-  location                 = var.location
-  account_tier             = "Standard"
-  
+  name                = "adsstg${substr(lower(replace(var.environment, "-", "")), 0, 11)}${random_string.suffix.result}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  account_tier        = "Standard"
+
   # Contrainte appliquée : LRS au lieu de GRS
-  account_replication_type = "LRS" 
+  account_replication_type = "LRS"
 
   identity {
     type = "SystemAssigned"
@@ -24,7 +24,7 @@ resource "azurerm_storage_account" "sa" {
     ip_rules                   = var.corporate_ip != "" ? [var.corporate_ip] : []
     virtual_network_subnet_ids = [var.aks_subnet_id]
   }
-  
+
   # Contrainte appliquée : Pas de soft delete activé explicitement
 }
 
