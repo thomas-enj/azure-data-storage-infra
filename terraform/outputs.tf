@@ -7,3 +7,8 @@ output "key_vault_id" {
   description = "L'ID du Key Vault à copier dans les manifestes ArgoCD (SecretProviderClass)"
   value       = module.keyvault.key_vault_id
 }
+
+output "tenant_id" {
+  description = "Le Tenant ID Azure à copier dans les manifestes ArgoCD (SecretProviderClass)"
+  value       = data.azurerm_client_config.current.tenant_id
+}
