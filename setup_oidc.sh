@@ -56,6 +56,18 @@ az role assignment create \
   --assignee-principal-type ServicePrincipal \
   --scope "$TARGET_RG_ID"
 
+az role assignment create \
+  --role "Key Vault Crypto Officer" \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --scope "$TARGET_RG_ID"
+
+az role assignment create \
+  --role "Key Vault Secrets Officer" \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --scope "$TARGET_RG_ID"
+
 echo "Création de la fédération OIDC pour la branche $BRANCH..."
 az identity federated-credential create \
   --name "github-actions-federation-branch" \
