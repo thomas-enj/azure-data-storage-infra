@@ -32,13 +32,13 @@ module "storage" {
 }
 
 module "identity" {
-  source              = "./modules/identity"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  resource_group_id   = data.azurerm_resource_group.rg.id
-  location            = var.location
-  environment         = var.environment
-  aks_oidc_issuer_url = module.aks.oidc_issuer_url
-  storage_account_id  = module.storage.storage_account_id
+  source                     = "./modules/identity"
+  resource_group_name        = data.azurerm_resource_group.rg.name
+  snapshot_resource_group_id = module.aks.node_resource_group_id
+  location                   = var.location
+  environment                = var.environment
+  aks_oidc_issuer_url        = module.aks.oidc_issuer_url
+  storage_account_id         = module.storage.storage_account_id
 }
 
 module "fileshare" {
