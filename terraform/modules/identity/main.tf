@@ -16,6 +16,12 @@ resource "azurerm_role_assignment" "velero_storage_reader" {
   principal_id         = azurerm_user_assigned_identity.velero.principal_id
 }
 
+resource "azurerm_role_assignment" "velero_disk_snapshot_contributor" {
+  scope                = var.resource_group_id
+  role_definition_name = "Disk Snapshot Contributor"
+  principal_id         = azurerm_user_assigned_identity.velero.principal_id
+}
+
 resource "azurerm_federated_identity_credential" "velero" {
   name                      = "velero-federated-credential"
   audience                  = ["api://AzureADTokenExchange"]
