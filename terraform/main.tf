@@ -34,6 +34,7 @@ module "storage" {
 module "identity" {
   source              = "./modules/identity"
   resource_group_name = data.azurerm_resource_group.rg.name
+  resource_group_id   = data.azurerm_resource_group.rg.id
   location            = var.location
   environment         = var.environment
   aks_oidc_issuer_url = module.aks.oidc_issuer_url
